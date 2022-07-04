@@ -453,10 +453,10 @@ if __name__ == "__main__":
     SOC_Configuration()
     Batt_Charger_Operation_Enable()
     # initiate threads
-    #rec_Msg1_thread=threading.Thread(target=rec_Msg1)
-    #rec_Msg1_thread.start()
-    #rec_Msg2_thread=threading.Thread(target=rec_Msg2)
-    #rec_Msg2_thread.start()
+    rec_Msg1_thread=threading.Thread(target=rec_Msg1)
+    rec_Msg1_thread.start()
+    rec_Msg2_thread=threading.Thread(target=rec_Msg2)
+    rec_Msg2_thread.start()
     while True:
         print("1: Xbee1 Transmit Data")
         print("2: Xbee2 Transmit Data")
