@@ -474,8 +474,8 @@ def Write_PANID():
                 print(e.__class__)
             print("Apply Changes - - -")
             time.sleep(3)
-            pan_id_dev1 = device1.get_pan_id()
-            print("PAN_ID of Xbee1 :",pan_id_dev1.hex())
+            #pan_id_dev1 = device1.get_pan_id()
+            print("PAN_ID of Xbee1 Changed")
         except:
             print("error writing PANID for xbee 1")
     if User_Input == "2":
@@ -500,7 +500,7 @@ def Write_PANID():
             print("Apply Changes - - -")
             time.sleep(3)
             pan_id_dev2 = device2.get_pan_id()
-            print("PAN_ID of Xbee2 :",pan_id_dev2.hex())
+            print("PAN_ID of Xbee2 Changed")
         except:
             print("error writing PANID for xbee 2")
 
