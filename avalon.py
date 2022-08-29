@@ -23,6 +23,7 @@ from pymodbus.pdu import ModbusRequest
 from pymodbus.client.sync import ModbusSerialClient as ModbusClient
 import gpiod
 
+
 # Initiate all the common parameters here/ setting here
 bus = smbus.SMBus(3)               # Zeta 3.0 uses I2c bus no 3 to communicate with Battery charger and Temperature sensor
 #gps = serial.Serial()
@@ -425,10 +426,181 @@ def xbee1_Status():
     print("TX Xbee_01:",DATA)
 
 def xbee2_Status():
-    DATA = '{"TS":"1544163610","DID":"00000","CMD":"HST2","CID":12345}'
+    HST3 = {"TS":"1544163610","DID":"00000","CMD":"HST3","CID":12345}
     #DATA = '{"TS":"1544163610","DID":"00000","CMD":"HINF"}'
-    device2.send_data_broadcast(DATA)
-    print("TX Xbee_02:",DATA)
+    device2.send_data_broadcast(json.dumps(HST3))
+    print("TX Xbee_02:",HST3)
+
+def Read_Xbee_Config():
+    print("-----------------------------------------------")
+    pan_id_dev2 = device2.get_pan_id()
+    pan_id_dev1 = device1.get_pan_id()
+    print("PAN_ID of Xbee1 :",pan_id_dev1.hex())
+    print("PAN_ID of Xbee2 :",pan_id_dev2.hex())
+    print("-----------------------------------------------")
+    Stack_dev2 = device2.get_parameter("ZS")
+    Stack_dev1 = device1.get_parameter("ZS")
+    print("Stack Profile of Xbee1 :",Stack_dev1.hex())
+    print("Stack Profile of Xbee2 :",Stack_dev2.hex())
+    print("-----------------------------------------------")
+    Op_pan_id_dev2 = device2.get_parameter("OI")
+    Op_pan_id_dev1 = device1.get_parameter("OI")
+    print("16_bit_OP_PAN_ID of Xbee1 :",Op_pan_id_dev1.hex())
+    print("16_bit_OP_PAN_ID of Xbee2 :",Op_pan_id_dev2.hex())
+    print("-----------------------------------------------")
+
+def Write_PANID():
+    print("1: Xbee1 PANID Change")
+    print("2: Xbee2 PANID Change")
+    User_Input = input("Enter your choice from 1 or 2:")
+    if User_Input == "1":
+        try:
+            User_Input = input("Enter PANID for Xbee 1 :")
+            print("User PANID Input is :",User_Input)
+            apply_changes_enabled = device1.is_apply_changes_enabled()
+            if apply_changes_enabled:
+                device1.enable_apply_changes(False)
+            try:
+                device1.set_pan_id(utils.hex_string_to_bytes(User_Input))
+            except Exception as e:
+                print(e.__class__)
+            try:
+                device1.apply_changes()
+            except Exception as e:
+                print(e.__class__)
+            try:
+                device1.write_changes()
+            except Exception as e:
+                print(e.__class__)
+            print("Apply Changes - - -")
+            time.sleep(3)
+            pan_id_dev1 = device1.get_pan_id()
+            print("PAN_ID of Xbee1 :",pan_id_dev1.hex())
+        except:
+            print("error writing PANID for xbee 1")
+    if User_Input == "2":
+        try:
+            User_Input = input("Enter PANID for Xbee 2 :")
+            print("User PANID Input is :",User_Input)
+            apply_changes_enabled = device2.is_apply_changes_enabled()
+            if apply_changes_enabled:
+                device2.enable_apply_changes(False)
+            try:
+                device2.set_pan_id(utils.hex_string_to_bytes(User_Input))
+            except Exception as e:
+                print(e.__class__)
+            try:
+                device2.apply_changes()
+            except Exception as e:
+                print(e.__class__)
+            try:
+                device2.write_changes()
+            except Exception as e:
+                print(e.__class__)
+            print("Apply Changes - - -")
+            time.sleep(3)
+            pan_id_dev2 = device2.get_pan_id()
+            print("PAN_ID of Xbee2 :",pan_id_dev2.hex())
+        except:
+            print("error writing PANID for xbee 2")
+
+def Write_Stack():
+    print("1: Xbee1 Stack Profile Change")
+    print("2: Xbee2 Stack Profile Change")
+    User_Input = input("Enter your choice from 1 or 2:")
+    if User_Input == "1":
+        try:
+            print("To Communicate with Rover 1.0 use Stack profile 0 ")
+            print("To Communicate with Rover 3.0 use Stack profile 2 ")
+            User_Input = input("User Input:")
+            device1.set_parameter("ZS", utils.hex_string_to_bytes(User_Input))
+            device1.execute_command("AC")
+            print("Apply Changes ----")
+            time.sleep(3)
+            Stack_dev1 = device1.get_parameter("ZS")
+            print("Stack Profile of Xbee1 :",Stack_dev1.hex())
+        except Exception as e:
+            print(e.__class__)
+    if User_Input == "2":
+        try:
+            print("To Communicate with Rover 1.0 use Stack profile 0 ")
+            print("To Communicate with Rover 3.0 use Stack profile 2 ")
+            User_Input = input("User Input:")
+            device2.set_parameter("ZS",utils.hex_string_to_bytes(User_Input))
+            device2.execute_command("AC")
+            print("Apply Changes ----")
+            time.sleep(3)
+            Stack_dev2 = device2.get_parameter("ZS")
+            print("Stack Profile of Xbee2 :",Stack_dev2.hex())
+        except Exception as e:
+            print(e.__class__)
+            
+def Change_Stack_Remote_Dev():
+    print("Rover1 Paired with Zeta Xbee 1 or 2, 1 for Xbee1, 2 for Xbee 2")
+    User_Input = input("Enter your choice from 1 or 2:")
+    if User_Input == "1":
+        print("Communication to a specific Rover or to a Group")
+        print("For Speific Rover select 1 for Multiple Rover select 2")
+        User_Input2 = input("Enter your choice from 1 or 2:")
+        if User_Input2 == "1":
+            User_Input2 = input("Enter Device ID:")
+            User_Input3 = input("Enter The stack Profile number 0 or 2")
+            if User_Input3 == "0":
+                Data = {"TS":str(int(time.time())),"DID":User_Input2,"CMD":"HZSP","VALUES":"0"}
+                print ("Command to send :",Data)
+                device1.send_data_broadcast(json.dumps(Data))
+            if User_Input3 == "2":
+                Data = {"TS":str(int(time.time())),"DID":User_Input2,"CMD":"HZSP","VALUES":"2"}
+                print ("Command to send :",Data)
+                device1.send_data_broadcast(json.dumps(Data))
+        if User_Input2 == "2":
+            User_Input = input("Enter The stack Profile number 0 or 2")
+            if User_Input2 == "0":
+                Data = {"TS":str(int(time.time())),"DID":"00000","CMD":"HZSP","VALUES":"0"}
+                print ("Command to send :",Data)
+                device1.send_data_broadcast(json.dumps(Data))
+            if User_Input2 == "2":
+                Data = {"TS":str(int(time.time())),"DID":"00000","CMD":"HZSP","VALUES":"2"}
+                print ("Command to send :",Data)
+                device1.send_data_broadcast(json.dumps(Data))
+    if User_Input == "2":
+        print("Communication to a specific Rover or to a Group")
+        print("For Speific Rover select 1 for Multiple Rover select 2")
+        User_Input = input("Enter your choice from 1 or 2:")
+        if User_Input == "1":
+            User_Input = input("Enter Device ID:")
+            print("User Device ID:",User_Input)
+            User_Input = input("Enter The stack Profile number 0 or 2")
+            if User_Input == "0":
+                Data = {"TS":str(int(time.time())),"DID":User_Input,"CMD":"HZSP","VALUES":"0"}
+                print ("Command to send :",Data)
+                device2.send_data_broadcast(json.dumps(Data))
+            if User_Input == "2":
+                Data = {"TS":str(int(time.time())),"DID":User_Input,"CMD":"HZSP","VALUES":"2"}
+                print ("Command to send :",Data)
+                device2.send_data_broadcast(json.dumps(Data))
+        if User_Input == "2":
+            User_Input = input("Enter The stack Profile number 0 or 2")
+            if User_Input == "0":
+                Data = {"TS":str(int(time.time())),"DID":"00000","CMD":"HZSP","VALUES":"0"}
+                print ("Command to send :",Data)
+                device2.send_data_broadcast(json.dumps(Data))
+            if User_Input == "2":
+                Data = {"TS":str(int(time.time())),"DID":"00000","CMD":"HZSP","VALUES":"2"}
+                print ("Command to send :",Data)
+                device2.send_data_broadcast(json.dumps(Data))
+
+def xbee_reset():
+    xbee1.set_value(0)   # Set value 0 Reset the xbee continiously 
+    xbee2.set_value(0)
+    print("GPIO Reset for 15 seconds")
+    time.sleep(15)
+    xbee1.set_value(1)   # Set value 0 Reset the xbee continiously 
+    xbee2.set_value(1)
+    print("GPIO Normal")
+            
+            
+    
 
 if __name__ == "__main__":
     print("Voyager Zone Controller Started")
@@ -465,7 +637,12 @@ if __name__ == "__main__":
         print("5: Read CPU & Board Temperature")
         print("6: Read Sensor port")
         print("7: Read Wind Sensor")
-        User_Input = input("Enter your choice from 1 to 7:")
+        print("8: Read Xbee Configuration")
+        print("9: Change Xbee PANID")
+        print("10: Change Xbee Stack Profile") 
+        print("11: Change Rover 1 Stack Profile over zigbee")
+        print("12: Xbee Hard Reset(Both Xbee)")
+        User_Input = input("Enter your choice from 1 to 12:")
         if User_Input == "1":
             try:
                 xbee1_Status()
@@ -502,3 +679,28 @@ if __name__ == "__main__":
                 Wind()
             except:
                 print("error reading")
+        if User_Input == "8":
+            try:
+                Read_Xbee_Config()
+            except:
+                print("error reading xbee configuration")
+        if User_Input == "9":
+            try:
+                Write_PANID()
+            except:
+                print("error writing PANID")
+        if User_Input == "10":
+            try:
+                Write_Stack()
+            except:
+                print("error writing stack profile")
+        if User_Input == "11":
+           try:
+               Change_Stack_Remote_Dev()
+           except:
+               print("error changing Remote Rover stack profile") 
+        if User_Input == "12":
+            try:
+                xbee_reset()
+            except:
+                print("error reset xbee") 
